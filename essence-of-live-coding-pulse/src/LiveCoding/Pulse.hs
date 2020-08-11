@@ -42,26 +42,14 @@ pulseHandle = Handle
 pulseWrapC :: Int -> PulseCell a () -> Cell (HandlingStateT IO) a ()
 pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
-  -- inSepThread calcAndPushSamples -< (simple, a)
   -- FIXME It remains to test whether sound actually works that way
-  -- FIXME Also try only StrictData
-  liftCell calcAndPushSamples -< (simple, a)
+  nonBlocking False calcAndPushSamples -< Just (simple, a)
+  returnA -< ()
     where
       calcAndPushSamples = proc (simple, a) -> do
         samplesAndBs <- resampleList cell -< replicate bufferSize a
         let (samples, bs) = unzip samplesAndBs
         arrM $ uncurry simpleWrite -< (simple, samples)
-
-inSepThread :: Cell IO a () -> Cell (HandlingStateT IO) a ()
-inSepThread Cell { .. } = proc a -> do
-  resultVar <- handling $ newMVarHandle Nothing -< ()
-  liftCell Cell { cellStep = backgroundStep, cellState = cellState } -< (resultVar, a)
-    where
-      backgroundStep s (resultVar, a) = do
-        s' <- fromMaybe s <$> takeMVar resultVar
-        forkIO $ putMVar resultVar =<< (Just . snd) <$> cellStep s a
-        return ((), s')
-inSepThread notACell = inSepThread $ toCell notACell
 
 -- Returns the sum between -1 and 1
 wrapSum :: (Monad m, Data a, RealFloat a) => Cell m a a
