@@ -1,5 +1,6 @@
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE RecordWildCards #-}
 module LiveCoding.Pulse where
 
 -- base
@@ -68,7 +69,7 @@ wrapSum = Cell
   { cellState = 0
   , cellStep  = \accum a ->
     let
-        (_, accum')  = properFraction $ accum + a
+        (_, !accum')  = properFraction $ accum + a
     in return (accum', accum')
   }
 
@@ -87,13 +88,13 @@ clamp lower upper a = min upper $ max lower a
 
 osc :: (Data a, RealFloat a, MonadFix m) => Cell (ReaderT a m) () a
 osc = proc _ -> do
-  f <- constM ask -< ()
-  phase <- wrapSum -< f / 48000
+  !f <- constM ask -< ()
+  !phase <- wrapSum -< f / 48000
   returnA -< sin $ 2 * pi * phase
 
 osc' :: (Data a, RealFloat a, MonadFix m) => Cell m a a
 osc' = proc a -> do
-  runReaderC' osc -< (a, ())
+  runReaderC' osc -< a `seq` (a, ())
 
 data Note
   = A
