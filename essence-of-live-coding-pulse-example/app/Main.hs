@@ -72,8 +72,8 @@ pulseCell :: PulseCell () ()
 pulseCell = proc _ -> do
   freq <- frequencies' -< ()
   melody <- osc' -< freq
-  bass <- osc' -< f D / 8
-  returnA -< (0.7 * melody + 0.3 * bass, ())
+  bass <- osc' -< f D / 4
+  returnA -< (atan $ 0.7 * melody + 0.3 * bass, ())
 
 
 liveProgram :: LiveProgram (HandlingStateT IO)
