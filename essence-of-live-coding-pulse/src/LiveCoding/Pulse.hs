@@ -37,7 +37,7 @@ pulseHandle = Handle
       (SampleSpec (F32 LittleEndian) sampleRate 1)
       Nothing
       Nothing
-  , destroy = simpleFree
+  , destroy = \simple -> putStrLn "Destroying pulse" >> simpleFree simple
   }
 
 pulseWrapC :: Int -> PulseCell a () -> Cell (HandlingStateT IO) a ()
