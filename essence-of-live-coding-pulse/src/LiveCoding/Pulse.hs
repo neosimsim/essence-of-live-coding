@@ -8,16 +8,17 @@ import Control.Arrow as X
 import Control.Concurrent
 import Control.Monad (void, forever)
 import Control.Monad.Fix
+import GHC.Float (int2Float)
 
 -- transformers
 import Control.Monad.Trans.Reader
+import Control.Monad.Trans.Class (MonadTrans(lift))
 
 -- pulse-simple
 import Sound.Pulse.Simple
 
 -- essence-of-live-coding
 import LiveCoding
-import Control.Monad.Trans.Class (MonadTrans(lift))
 import Data.Maybe (fromMaybe)
 
 type PulseCell a b = Cell IO a (Float, b)
@@ -44,6 +45,8 @@ pulseWrapC bufferSize cell = proc a -> do
   simple <- handling pulseHandle -< ()
   -- FIXME It remains to test whether sound actually works that way
   nonBlocking False calcAndPushSamples -< Just (simple, a)
+  arrM $ lift . threadDelay -< 100
+  -- arrM $ lift . threadDelay                  -< round $ int2Float bufferSize * 1000000 / 2000 / int2Float sampleRate -- TODO Tweak for better performance
   returnA -< ()
     where
       calcAndPushSamples = proc (simple, a) -> do
