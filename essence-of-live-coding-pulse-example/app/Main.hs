@@ -66,10 +66,15 @@ cycleThrough bs cycleLength = let vector = Vector.fromList (NonEmpty.toList bs) 
   n <- modSum (cycleLength * length bs) -< 1
   returnA -< vector ! (n `div` cycleLength)
 
-frequencies' = cycleThrough (NonEmpty.fromList $ [f D, f G, o $ f Bb]) 8000
+frequencies' = cycleThrough (NonEmpty.fromList $ [f D, f Fis, o $ f A]) 8000
 
 pulseCell :: PulseCell () ()
-pulseCell = frequencies' >>> osc' >>> arr (, ())
+pulseCell = proc _ -> do
+  freq <- frequencies' -< ()
+  melody <- osc' -< freq
+  bass <- osc' -< f D / 8
+  returnA -< (0.7 * melody + 0.3 * bass, ())
+
 
 liveProgram :: LiveProgram (HandlingStateT IO)
 liveProgram = liveCell $ pulseWrapC 1024 pulseCell >>> arr (const ())
